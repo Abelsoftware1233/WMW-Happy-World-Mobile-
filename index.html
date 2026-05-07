@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Mario – 20 Levels</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       SCHERM 1 – STARTSCHERM
+  ═══════════════════════════════════════ -->
+  <div id="screen-start" class="screen active">
+    <div class="stars-bg"></div>
+    <div class="start-content">
+      <div class="logo-wrap">
+        <div class="logo-super">SUPER</div>
+        <div class="logo-mario">MARIO</div>
+        <div class="logo-sub">20 LEVELS EDITION</div>
+      </div>
+      <div class="mario-idle pixel-art" aria-hidden="true">
+        <div class="sprite mario-sprite"></div>
+      </div>
+      <button id="btn-start" class="pixel-btn">▶ SPEEL</button>
+      <div class="hint blink">DRUK OP SPEEL OM TE BEGINNEN</div>
+      <div class="copyright">© 1985 NINTENDO – GAME ENGINE BY YOU</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SCHERM 2 – LEVEL SELECTIE
+  ═══════════════════════════════════════ -->
+  <div id="screen-select" class="screen">
+    <div class="select-header">
+      <h2 class="select-title">KIES EEN LEVEL</h2>
+    </div>
+    <div id="level-grid" class="level-grid">
+      <!-- Gegenereerd via JS -->
+    </div>
+    <button id="btn-back-select" class="pixel-btn small">← TERUG</button>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SCHERM 3 – HUD + GAME CANVAS
+  ═══════════════════════════════════════ -->
+  <div id="screen-game" class="screen">
+    <!-- HUD bovenin -->
+    <div id="hud">
+      <div class="hud-block">
+        <span class="hud-label">MARIO</span>
+        <span id="hud-score" class="hud-value">000000</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">MUNTEN</span>
+        <span id="hud-coins" class="hud-value">×00</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">LEVEL</span>
+        <span id="hud-level" class="hud-value">1-1</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">TIJD</span>
+        <span id="hud-time" class="hud-value">400</span>
+      </div>
+      <div class="hud-block">
+        <span class="hud-label">LEVENS</span>
+        <span id="hud-lives" class="hud-value">♥ 3</span>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Touch controls (mobiel) -->
+    <div id="touch-controls">
+      <button class="touch-btn" id="tc-left">◀</button>
+      <button class="touch-btn" id="tc-jump">▲</button>
+      <button class="touch-btn" id="tc-right">▶</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SCHERM 4 – LEVEL GEWONNEN
+  ═══════════════════════════════════════ -->
+  <div id="screen-win" class="screen">
+    <div class="result-box">
+      <div class="result-icon">🏆</div>
+      <h2 class="result-title">LEVEL KLAAR!</h2>
+      <div class="result-stats">
+        <div class="stat-row"><span>SCORE</span><span id="win-score">0</span></div>
+        <div class="stat-row"><span>MUNTEN</span><span id="win-coins">0</span></div>
+        <div class="stat-row"><span>TIJD</span><span id="win-time">0</span></div>
+        <div class="stat-row"><span>BONUS</span><span id="win-bonus">0</span></div>
+      </div>
+      <div class="result-btns">
+        <button id="btn-next-level" class="pixel-btn">VOLGEND LEVEL ▶</button>
+        <button id="btn-win-select" class="pixel-btn small">LEVEL KEUZE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SCHERM 5 – GAME OVER
+  ═══════════════════════════════════════ -->
+  <div id="screen-gameover" class="screen">
+    <div class="result-box red">
+      <div class="result-icon">💀</div>
+      <h2 class="result-title">GAME OVER</h2>
+      <p class="result-sub">Je hebt al je levens verloren!</p>
+      <div class="result-btns">
+        <button id="btn-retry" class="pixel-btn">OPNIEUW ▶</button>
+        <button id="btn-go-select" class="pixel-btn small">LEVEL KEUZE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SCHERM 6 – ALLE LEVELS VOLTOOID
+  ═══════════════════════════════════════ -->
+  <div id="screen-complete" class="screen">
+    <div class="fireworks"></div>
+    <div class="result-box gold">
+      <div class="result-icon spin">⭐</div>
+      <h2 class="result-title rainbow">ALLE LEVELS VOLTOOID!</h2>
+      <p class="result-sub">Jij bent een echte Mario kampioen!</p>
+      <div class="result-stats">
+        <div class="stat-row"><span>TOTAAL SCORE</span><span id="total-score">0</span></div>
+        <div class="stat-row"><span>TOTAAL MUNTEN</span><span id="total-coins">0</span></div>
+      </div>
+      <button id="btn-restart-all" class="pixel-btn gold-btn">OPNIEUW SPELEN</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="script.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
