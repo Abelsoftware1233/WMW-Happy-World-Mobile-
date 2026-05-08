@@ -1,0 +1,1870 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Super Mario – 20 Levels</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+/* ═══════════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════════ */
+:root {
+  --mario-red:    #e52521;
+  --mario-blue:   #049cd8;
+  --mario-yellow: #fbd000;
+  --mario-green:  #43b047;
+  --mario-brown:  #8b6914;
+  --sky:          #5c94fc;
+  --ground:       #c84b0c;
+  --dark:         #000000;
+  --white:        #ffffff;
+  --hud-bg:       #000000ee;
+  --coin-gold:    #ffd700;
+  --font-pixel:   'Press Start 2P', 'Courier New', monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: var(--font-pixel);
+  color: var(--white);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  /* Fix iOS bounce */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SCHERMEN
+═══════════════════════════════════════════════════════ */
+.screen {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+.screen.active { display: flex; }
+
+/* ═══════════════════════════════════════════════════════
+   STARTSCHERM
+═══════════════════════════════════════════════════════ */
+#screen-start {
+  background: var(--sky);
+  overflow: hidden;
+}
+
+.stars-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle, #fff 1px, transparent 1px) 10px 20px / 60px 60px,
+    radial-gradient(circle, #fff 1px, transparent 1px) 35px 50px / 90px 90px,
+    radial-gradient(circle, #ffffffaa 1px, transparent 1px) 70px 10px / 120px 80px;
+  opacity: 0.3;
+  animation: twinkle 4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes twinkle {
+  from { opacity: 0.2; }
+  to   { opacity: 0.5; }
+}
+
+/* Ground decoration on start screen */
+.ground-deco {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: #c84b0c;
+  border-top: 4px solid #000;
+}
+.ground-deco::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 8px;
+  background: #8b3500;
+}
+
+.start-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 3vw, 24px);
+  padding: 20px;
+}
+
+.logo-wrap {
+  text-align: center;
+  line-height: 1.1;
+}
+.logo-super {
+  font-size: clamp(12px, 3.5vw, 22px);
+  color: var(--mario-yellow);
+  text-shadow: 3px 3px 0 #8b6900, -1px -1px 0 #000;
+  letter-spacing: 6px;
+}
+.logo-mario {
+  font-size: clamp(32px, 10vw, 88px);
+  color: var(--mario-red);
+  text-shadow:
+    4px 4px 0 #6b1010,
+    8px 8px 0 #000;
+  letter-spacing: 4px;
+  animation: logo-bounce 1.4s ease-in-out infinite alternate;
+}
+@keyframes logo-bounce {
+  from { transform: translateY(0px); }
+  to   { transform: translateY(-8px); }
+}
+.logo-sub {
+  font-size: clamp(7px, 1.8vw, 12px);
+  color: var(--white);
+  letter-spacing: 3px;
+  margin-top: 8px;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.mario-idle {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: mario-walk 0.6s steps(2) infinite;
+}
+.mario-sprite {
+  width: 48px;
+  height: 48px;
+  background: var(--mario-red);
+  border: 3px solid #000;
+  position: relative;
+  border-radius: 4px 4px 0 0;
+}
+.mario-sprite::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: 4px;
+  width: 28px; height: 12px;
+  background: var(--mario-yellow);
+  border: 2px solid #000;
+}
+.mario-sprite::after {
+  content: '';
+  position: absolute;
+  bottom: -12px; left: 0;
+  width: 48px; height: 12px;
+  background: var(--mario-brown);
+  border: 3px solid #000;
+}
+@keyframes mario-walk {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(-1); }
+}
+
+/* ── Pixel knop – basis ── */
+.pixel-btn {
+  font-family: var(--font-pixel);
+  font-size: clamp(10px, 2.5vw, 14px);
+  color: var(--white);
+  background: var(--mario-red);
+  border: none;
+  outline: none;
+  padding: clamp(12px, 3vw, 16px) clamp(20px, 5vw, 32px);
+  cursor: pointer;
+  position: relative;
+  box-shadow:
+    0 6px 0 #6b1010,
+    0 7px 0 #000,
+    inset 0 2px 0 rgba(255,255,255,0.25);
+  transition: transform 0.08s, box-shadow 0.08s;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%);
+  min-width: clamp(140px, 40vw, 200px);
+  text-align: center;
+  /* Larger tap target on mobile */
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pixel-btn:hover, .pixel-btn:focus {
+  background: #ff3a35;
+  transform: translateY(-3px);
+  box-shadow: 0 9px 0 #6b1010, 0 10px 0 #000, inset 0 2px 0 rgba(255,255,255,0.25);
+}
+.pixel-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #6b1010, 0 3px 0 #000;
+}
+.pixel-btn.small {
+  font-size: clamp(8px, 1.8vw, 11px);
+  padding: clamp(10px, 2.5vw, 12px) clamp(14px, 3vw, 20px);
+  background: #333;
+  box-shadow: 0 4px 0 #111, 0 5px 0 #000;
+  min-width: 120px;
+}
+.pixel-btn.small:hover { background: #555; }
+.pixel-btn.gold-btn {
+  background: var(--mario-yellow);
+  color: #000;
+  box-shadow: 0 6px 0 #9a7d00, 0 7px 0 #000;
+}
+.pixel-btn.gold-btn:hover {
+  background: #ffe033;
+  transform: translateY(-3px);
+  box-shadow: 0 9px 0 #9a7d00, 0 10px 0 #000;
+}
+
+.hint {
+  font-size: clamp(7px, 1.5vw, 9px);
+  color: var(--mario-yellow);
+  letter-spacing: 2px;
+  text-shadow: 2px 2px 0 #000;
+  text-align: center;
+}
+.blink {
+  animation: blink-text 1s step-start infinite;
+}
+@keyframes blink-text {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.copyright {
+  font-size: 7px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LEVEL SELECTIE
+═══════════════════════════════════════════════════════ */
+#screen-select {
+  background: linear-gradient(180deg, #1a0533 0%, #0d1a4a 40%, #1a3a6e 100%);
+  gap: 16px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.select-header { text-align: center; }
+.select-title {
+  font-size: clamp(12px, 3.5vw, 22px);
+  color: var(--mario-yellow);
+  text-shadow: 3px 3px 0 #000;
+  letter-spacing: 3px;
+}
+
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(100px, 25vw, 140px), 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 900px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 4px;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mario-red) #000;
+  /* iOS smooth scroll */
+  -webkit-overflow-scrolling: touch;
+}
+.level-grid::-webkit-scrollbar { width: 4px; }
+.level-grid::-webkit-scrollbar-track { background: #000; }
+.level-grid::-webkit-scrollbar-thumb { background: var(--mario-red); }
+
+.level-card {
+  background: #0a1a3a;
+  border: 3px solid #2a4a8a;
+  padding: clamp(10px, 2vw, 14px) clamp(8px, 1.5vw, 10px);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s, background 0.15s;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  min-height: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.level-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+.level-card:hover, .level-card:active {
+  border-color: var(--mario-yellow);
+  background: #12285a;
+  transform: scale(1.04);
+}
+.level-card.completed {
+  border-color: var(--mario-green);
+}
+.level-card.completed::after {
+  content: '✓';
+  position: absolute;
+  top: 3px; right: 6px;
+  color: var(--mario-green);
+  font-size: 12px;
+}
+.level-num {
+  font-size: clamp(8px, 2vw, 10px);
+  color: var(--mario-yellow);
+  text-shadow: 2px 2px 0 #000;
+}
+.level-name {
+  font-size: clamp(6px, 1.4vw, 7px);
+  color: var(--white);
+  line-height: 1.5;
+  text-shadow: 1px 1px 0 #000;
+}
+.level-time {
+  font-size: 6px;
+  color: #aaa;
+}
+
+/* ═══════════════════════════════════════════════════════
+   GAME SCHERM
+═══════════════════════════════════════════════════════ */
+#screen-game {
+  background: #000;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+/* HUD */
+#hud {
+  width: 100%;
+  background: var(--hud-bg);
+  border-bottom: 3px solid var(--mario-red);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 6px 8px;
+  z-index: 10;
+  flex-shrink: 0;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+.hud-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.hud-label {
+  font-size: clamp(4px, 1.2vw, 7px);
+  color: #aaa;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.hud-value {
+  font-size: clamp(8px, 2vw, 13px);
+  color: var(--mario-yellow);
+  text-shadow: 2px 2px 0 #000;
+  text-align: center;
+  white-space: nowrap;
+}
+#hud-lives { color: var(--mario-red) !important; }
+#hud-time  { color: var(--white) !important; }
+
+/* Canvas */
+#game-canvas {
+  display: block;
+  width: 100%;
+  flex: 1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: var(--sky);
+  touch-action: none;
+}
+
+/* ── TOUCH CONTROLS ── */
+#touch-controls {
+  display: none;
+  width: 100%;
+  background: rgba(0,0,0,0.85);
+  border-top: 2px solid #222;
+  align-items: center;
+  padding: 10px 16px 14px;
+  flex-shrink: 0;
+  /* Safe area for iPhone X+ */
+  padding-bottom: max(14px, env(safe-area-inset-bottom, 14px));
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Always show on touch devices / small screens */
+@media (max-width: 900px), (pointer: coarse) {
+  #touch-controls { display: flex; }
+}
+
+/* Left side: D-pad */
+.tc-dpad {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Right side: jump */
+.tc-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+}
+
+.touch-btn {
+  font-family: var(--font-pixel);
+  background: rgba(255,255,255,0.08);
+  border: 3px solid rgba(255,255,255,0.25);
+  color: var(--white);
+  cursor: pointer;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.08s, transform 0.08s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Direction buttons: 56×56 */
+.touch-btn.dir-btn {
+  width: clamp(52px, 12vw, 68px);
+  height: clamp(52px, 12vw, 68px);
+  font-size: clamp(18px, 5vw, 26px);
+}
+
+/* Jump button: bigger, round */
+.touch-btn.jump-btn {
+  width: clamp(64px, 16vw, 84px);
+  height: clamp(64px, 16vw, 84px);
+  background: rgba(229, 37, 33, 0.35);
+  border-color: var(--mario-red);
+  border-radius: 50%;
+  font-size: clamp(20px, 6vw, 30px);
+  box-shadow: 0 0 20px rgba(229,37,33,0.4);
+}
+
+.touch-btn:active,
+.touch-btn.pressed {
+  background: rgba(255,255,255,0.25) !important;
+  transform: scale(0.92);
+}
+.touch-btn.jump-btn:active,
+.touch-btn.jump-btn.pressed {
+  background: rgba(229, 37, 33, 0.7) !important;
+  box-shadow: 0 0 30px rgba(229,37,33,0.8);
+}
+
+/* Button labels */
+.btn-label {
+  font-size: clamp(5px, 1.2vw, 7px);
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESULTAAT SCHERMEN
+═══════════════════════════════════════════════════════ */
+#screen-win      { background: linear-gradient(180deg, #001a00 0%, #003300 100%); }
+#screen-gameover { background: linear-gradient(180deg, #1a0000 0%, #330000 100%); }
+#screen-complete { background: linear-gradient(180deg, #0a0020 0%, #1a004a 100%); overflow: hidden; }
+
+.result-box {
+  background: #0d0d0d;
+  border: 4px solid var(--mario-green);
+  padding: clamp(20px, 5vw, 40px) clamp(20px, 6vw, 48px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(12px, 3vw, 20px);
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 0 0 2px #000, 0 0 40px rgba(0,200,0,0.2);
+}
+.result-box.red {
+  border-color: var(--mario-red);
+  box-shadow: 0 0 0 2px #000, 0 0 40px rgba(200,0,0,0.25);
+}
+.result-box.gold {
+  border-color: var(--mario-yellow);
+  box-shadow: 0 0 0 2px #000, 0 0 60px rgba(255,215,0,0.3);
+}
+
+.result-icon {
+  font-size: clamp(40px, 12vw, 56px);
+  line-height: 1;
+}
+.result-icon.spin { animation: icon-spin 2s linear infinite; }
+@keyframes icon-spin {
+  from { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.2); }
+  to   { transform: rotate(360deg) scale(1); }
+}
+
+.result-title {
+  font-size: clamp(14px, 4vw, 24px);
+  color: var(--mario-yellow);
+  text-shadow: 3px 3px 0 #000;
+  letter-spacing: 2px;
+}
+.result-title.rainbow {
+  animation: rainbow-text 2s linear infinite;
+  background: linear-gradient(90deg, #ff0000, #ff7700, #ffff00, #00ff00, #0077ff, #8800ff, #ff0000);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+@keyframes rainbow-text {
+  from { background-position: 0% center; }
+  to   { background-position: 200% center; }
+}
+
+.result-sub {
+  font-size: clamp(7px, 1.8vw, 10px);
+  color: #ccc;
+  letter-spacing: 1px;
+  line-height: 1.8;
+}
+
+.result-stats {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 2px solid #333;
+  border-bottom: 2px solid #333;
+  padding: 12px 0;
+}
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: clamp(8px, 2vw, 11px);
+  color: var(--white);
+  text-shadow: 1px 1px 0 #000;
+}
+.stat-row span:last-child { color: var(--mario-yellow); }
+
+.result-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+
+/* Fireworks */
+.fireworks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.fireworks::before,
+.fireworks::after {
+  content: '';
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  animation: firework-a 2.5s ease-out infinite;
+}
+.fireworks::before {
+  background: var(--mario-yellow);
+  left: 25%; top: 30%;
+  box-shadow:
+    0 -60px 0 var(--mario-red), 42px -42px 0 var(--mario-blue),
+    60px 0 0 var(--mario-green), 42px 42px 0 var(--mario-yellow),
+    0 60px 0 var(--mario-red), -42px 42px 0 var(--mario-blue),
+    -60px 0 0 var(--mario-green), -42px -42px 0 var(--mario-yellow);
+}
+.fireworks::after {
+  background: var(--mario-blue);
+  left: 70%; top: 40%;
+  animation-delay: 1.25s;
+  box-shadow:
+    0 -80px 0 var(--mario-yellow), 56px -56px 0 var(--mario-red),
+    80px 0 0 var(--mario-blue), 56px 56px 0 var(--mario-green),
+    0 80px 0 var(--mario-yellow), -56px 56px 0 var(--mario-red),
+    -80px 0 0 var(--mario-blue), -56px -56px 0 var(--mario-green);
+}
+@keyframes firework-a {
+  0%   { transform: scale(0); opacity: 1; }
+  60%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: var(--mario-red); border-radius: 2px; }
+.hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ STARTSCHERM ═══════════════════ -->
+<div id="screen-start" class="screen active">
+  <div class="stars-bg"></div>
+  <div class="ground-deco"></div>
+  <div class="start-content">
+    <div class="logo-wrap">
+      <div class="logo-super">SUPER</div>
+      <div class="logo-mario">MARIO</div>
+      <div class="logo-sub">20 LEVELS EDITION</div>
+    </div>
+    <div class="mario-idle" aria-hidden="true">
+      <div class="mario-sprite"></div>
+    </div>
+    <button id="btn-start" class="pixel-btn">▶ SPEEL</button>
+    <div class="hint blink">DRUK OP SPEEL OM TE BEGINNEN</div>
+    <div class="copyright">© 1985 NINTENDO – GAME ENGINE BY YOU</div>
+  </div>
+</div>
+
+<!-- ═══════════════════ LEVEL SELECTIE ═══════════════════ -->
+<div id="screen-select" class="screen">
+  <div class="select-header">
+    <h2 class="select-title">KIES EEN LEVEL</h2>
+  </div>
+  <div id="level-grid" class="level-grid"></div>
+  <button id="btn-back-select" class="pixel-btn small">← TERUG</button>
+</div>
+
+<!-- ═══════════════════ GAME CANVAS ═══════════════════ -->
+<div id="screen-game" class="screen">
+  <div id="hud">
+    <div class="hud-block">
+      <span class="hud-label">MARIO</span>
+      <span id="hud-score" class="hud-value">000000</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-label">MUNTEN</span>
+      <span id="hud-coins" class="hud-value">×00</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-label">LEVEL</span>
+      <span id="hud-level" class="hud-value">1-1</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-label">TIJD</span>
+      <span id="hud-time" class="hud-value">400</span>
+    </div>
+    <div class="hud-block">
+      <span class="hud-label">LEVENS</span>
+      <span id="hud-lives" class="hud-value">♥ 3</span>
+    </div>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <!-- TOUCH CONTROLS: links D-pad, rechts sprong -->
+  <div id="touch-controls">
+    <div class="tc-dpad">
+      <button class="touch-btn dir-btn" id="tc-left">◀<span class="btn-label">LINKS</span></button>
+      <button class="touch-btn dir-btn" id="tc-right">▶<span class="btn-label">RECHTS</span></button>
+    </div>
+    <div class="tc-action">
+      <button class="touch-btn jump-btn" id="tc-jump">▲<span class="btn-label">SPRING</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ LEVEL GEWONNEN ═══════════════════ -->
+<div id="screen-win" class="screen">
+  <div class="result-box">
+    <div class="result-icon">🏆</div>
+    <h2 class="result-title">LEVEL KLAAR!</h2>
+    <div class="result-stats">
+      <div class="stat-row"><span>SCORE</span><span id="win-score">0</span></div>
+      <div class="stat-row"><span>MUNTEN</span><span id="win-coins">0</span></div>
+      <div class="stat-row"><span>TIJD</span><span id="win-time">0</span></div>
+      <div class="stat-row"><span>BONUS</span><span id="win-bonus">0</span></div>
+    </div>
+    <div class="result-btns">
+      <button id="btn-next-level" class="pixel-btn">VOLGEND LEVEL ▶</button>
+      <button id="btn-win-select" class="pixel-btn small">LEVEL KEUZE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ GAME OVER ═══════════════════ -->
+<div id="screen-gameover" class="screen">
+  <div class="result-box red">
+    <div class="result-icon">💀</div>
+    <h2 class="result-title">GAME OVER</h2>
+    <p class="result-sub">Je hebt al je levens verloren!</p>
+    <div class="result-btns">
+      <button id="btn-retry" class="pixel-btn">OPNIEUW ▶</button>
+      <button id="btn-go-select" class="pixel-btn small">LEVEL KEUZE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ ALLE LEVELS VOLTOOID ═══════════════════ -->
+<div id="screen-complete" class="screen">
+  <div class="fireworks"></div>
+  <div class="result-box gold">
+    <div class="result-icon spin">⭐</div>
+    <h2 class="result-title rainbow">ALLE LEVELS VOLTOOID!</h2>
+    <p class="result-sub">Jij bent een echte Mario kampioen!</p>
+    <div class="result-stats">
+      <div class="stat-row"><span>TOTAAL SCORE</span><span id="total-score">0</span></div>
+      <div class="stat-row"><span>TOTAAL MUNTEN</span><span id="total-coins">0</span></div>
+    </div>
+    <button id="btn-restart-all" class="pixel-btn gold-btn">OPNIEUW SPELEN</button>
+  </div>
+</div>
+
+<script>
+// =============================================================
+//  LEVELS DATA
+// =============================================================
+const LEVELS = [
+  {
+    name: "World 1-1",
+    timeLimit: 400,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,2,3,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,3,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,2,0,0,0,0,0,0,0,0,1],
+      ['M',0,0,0,'G',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'G','G',0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 1-2 (Underground)",
+    timeLimit: 300,
+    map: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,0,0,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,8,8,8,8,8,0,0,0,0,0,0,0,0,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,'M',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'G',0,0,0,0,0,0,0,0,0,'G',0,0,0,0,0,0,0,0,0,0,0,10,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 2-1 (Coin Heaven)",
+    timeLimit: 350,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,8,8,8,8,8,8,8,8,0,0,0,0,8,8,8,8,8,8,8,8,0,0,0,0,8,8,8,8,8,8,8,8,0,0,0,0,1],
+      [0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0,3,3,3,3,3,3,3,3,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      ['M',0,'G',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'K',0,0,1],
+      [1,1,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 3-1 (Waterworld)",
+    timeLimit: 300,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      ['M',0,0,0,0,0,0,0,0,0,'G',0,0,0,0,0,0,0,0,0,'G',0,0,0,0,0,0,0,0,0,'G',0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 1-4 (Castle)",
+    timeLimit: 200,
+    map: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,3,3,0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,'M',0,0,0,0,0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,0,0,0,'K',0,0,0,10,0,1],
+      [1,1,1,1,1,0,0,1,1,1,1,0,0,1,1,1,1,0,0,1,1,1,1,0,0,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 2-2 (Hills)",
+    timeLimit: 400,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,4,5,0,0,0,0,0,0,0,0,0,0,0,0,0,4,5,0,0,0,0,0,0,0,0,0,0,0,0,0,4,5,0,0,0,1],
+      [0,0,0,0,0,6,7,0,0,0,0,0,0,0,0,0,0,0,0,0,6,7,0,0,0,0,0,0,0,0,0,0,0,0,0,6,7,0,0,0,1],
+      ['M',0,'G',0,0,6,7,0,0,0,0,0,0,0,'G',0,0,0,0,0,6,7,0,0,0,0,0,'K',0,0,0,0,0,0,0,6,7,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 2-3 (Star Road)",
+    timeLimit: 200,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,9,0,0,9,0,0,9,0,0,9,0,0,9,0,0,9,0,0,9,0,0,9,0,0,9,0,0,9,0,0,9,0,0,9,0,0,9,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      ['M',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 3-2 (Pipe Jungle)",
+    timeLimit: 350,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,4,5,0,0,0,0,4,5,0,0,0,0,4,5,0,0,0,0,4,5,0,0,0,0,4,5,0,0,0,0,4,5,0,0,0,0,0,0,1],
+      [0,0,6,7,0,0,0,0,6,7,0,0,0,0,6,7,0,0,0,0,6,7,0,0,0,0,6,7,0,0,0,0,6,7,0,0,0,0,0,0,1],
+      ['M',0,6,7,'G',0,0,'G',6,7,0,0,'G',0,6,7,0,0,0,0,6,7,0,0,0,0,6,7,0,0,0,'K',6,7,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 4-1 (Bridge)",
+    timeLimit: 300,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      ['M',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'G',0,0,0,0,0,0,0,0,0,0,'G',0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 4-4 (Big Castle)",
+    timeLimit: 200,
+    map: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,1,1,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,'M',0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,0,'K',0,0,10,0,1],
+      [1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 5-1 (Night)",
+    timeLimit: 350,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,3,3,3,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,3,3,3,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      ['M',0,0,0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,'K',0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 5-2 (Ice World)",
+    timeLimit: 300,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      ['M',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'G',0,0,0,0,0,0,0,0,0,'G',0,0,0,0,0,0,0,0,0,'G',0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 6-1 (Desert)",
+    timeLimit: 350,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,1],
+      ['M',0,'G',0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,1,1,1,0,'G',0,'K',0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 6-2 (High Platforms)",
+    timeLimit: 300,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      ['M',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,'G',0,0,0,1],
+      [1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 7-1 (Coin Rain)",
+    timeLimit: 250,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      ['M',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 7-4 (Maze Castle)",
+    timeLimit: 200,
+    map: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
+      [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0,1],
+      [1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,1,0,0,1],
+      [1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,0,0,0,0,1],
+      [1,'M',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 8-1 (Airship)",
+    timeLimit: 300,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,1,1,10],
+      ['M',0,0,0,0,0,0,0,0,0,'K',0,0,0,0,0,'K',0,0,0,0,0,'K',0,0,0,0,0,'K',0,0,0,0,0,'K',0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 8-3 (Boss Approach)",
+    timeLimit: 250,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [0,0,9,0,0,0,0,0,9,0,0,0,0,0,9,0,0,0,0,0,9,0,0,0,0,0,9,0,0,0,0,0,9,0,0,0,0,0,9,0,1],
+      ['M',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,'K',0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 8-4 (Final Castle)",
+    timeLimit: 200,
+    map: [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,1],
+      [1,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,'M',0,0,0,'K',0,0,0,0,'K',0,0,0,0,'K',0,0,0,0,'K',0,0,0,0,'K',0,0,0,0,'K',0,0,0,0,'K',0,0,10,0,1],
+      [1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+  {
+    name: "World 9-1 (Secret Bonus)",
+    timeLimit: 150,
+    map: [
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10],
+      [0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [8,8,0,0,8,8,0,0,8,8,0,0,8,8,0,0,8,8,0,0,8,8,0,0,8,8,0,0,8,8,0,0,8,8,0,0,8,8,0,0,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,9,0,1],
+      ['M',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    ],
+  },
+];
+
+// =============================================================
+//  GAME ENGINE
+// =============================================================
+(function () {
+  'use strict';
+
+  const T = {
+    EMPTY: 0, GROUND: 1, QUESTION: 2, BRICK: 3,
+    PIPE_TL: 4, PIPE_TR: 5, PIPE_BL: 6, PIPE_BR: 7,
+    COIN: 8, STAR: 9, FLAG: 10,
+  };
+
+  const TILE_SIZE = 40;
+
+  const COL = {
+    sky: '#5c94fc', ground: '#c84b0c', groundDark: '#8b3500',
+    brick: '#b45700', brickDark: '#7a3900',
+    question: '#fbd000', questionDk: '#c89000',
+    pipeGreen: '#43b047', pipeDark: '#2d7030',
+    coin: '#ffd700', coinShine: '#fff8a0',
+    star: '#ffffff', starGlow: '#ffffa0',
+    flag: '#ffffff', flagPole: '#888888',
+    mario: '#e52521', marioPants: '#049cd8', marioBrown: '#c87000',
+    goomba: '#8b6914', goombaFace: '#c87000',
+    koopa: '#2d8a2d', koopaDark: '#1a5c1a',
+    outline: '#000000',
+  };
+
+  const GRAVITY  = 0.6;
+  const TERM_VEL = 16;
+
+  // ── Game state ──
+  const state = {
+    currentLevel: 0,
+    lives: 3,
+    totalScore: 0,
+    totalCoins: 0,
+    completed: [],
+    score: 0,
+    coins: 0,
+    timeLeft: 400,
+    timerInterval: null,
+    running: false,
+    paused: false,
+    animId: null,
+  };
+
+  // ── Player ──
+  const player = {
+    x: 0, y: 0, vx: 0, vy: 0,
+    onGround: false,
+    width: TILE_SIZE * 0.8,
+    height: TILE_SIZE * 0.9,
+    speed: 4,
+    jumpPower: -13,
+    alive: true,
+    frame: 0,
+    frameTimer: 0,
+  };
+
+  let enemies   = [];
+  let pickups   = [];
+  // BUG FIX: mapData is a deep copy so original LEVELS are never mutated
+  let mapData   = [];
+  let mapWidth  = 0;
+  let mapHeight = 0;
+
+  const canvas = document.getElementById('game-canvas');
+  const ctx    = canvas.getContext('2d');
+  let cameraX  = 0;
+
+  const keys = { left: false, right: false, jump: false };
+
+  // Screens
+  const screens = {
+    start:    document.getElementById('screen-start'),
+    select:   document.getElementById('screen-select'),
+    game:     document.getElementById('screen-game'),
+    win:      document.getElementById('screen-win'),
+    gameover: document.getElementById('screen-gameover'),
+    complete: document.getElementById('screen-complete'),
+  };
+
+  function showScreen(name) {
+    Object.values(screens).forEach(s => s.classList.remove('active'));
+    screens[name].classList.add('active');
+    // On game screen, recalculate canvas immediately
+    if (name === 'game') {
+      requestAnimationFrame(resizeCanvas);
+    }
+  }
+
+  // ══════════════════════════════════════════
+  //  LEVEL GRID
+  // ══════════════════════════════════════════
+  function buildLevelGrid() {
+    const grid = document.getElementById('level-grid');
+    grid.innerHTML = '';
+    LEVELS.forEach((lvl, i) => {
+      const card = document.createElement('div');
+      card.className = 'level-card';
+      if (state.completed.includes(i)) card.classList.add('completed');
+      card.innerHTML = `
+        <div class="level-num">LEVEL ${i + 1}</div>
+        <div class="level-name">${lvl.name}</div>
+        <div class="level-time">⏱ ${lvl.timeLimit}s</div>
+      `;
+      card.addEventListener('click', () => startLevel(i));
+      grid.appendChild(card);
+    });
+  }
+
+  // ══════════════════════════════════════════
+  //  START LEVEL  – BUG FIX: deep-copy mapData
+  // ══════════════════════════════════════════
+  function startLevel(index) {
+    // Cancel any existing animation frame
+    if (state.animId) cancelAnimationFrame(state.animId);
+    stopTimer();
+
+    state.currentLevel = index;
+    state.score   = 0;
+    state.coins   = 0;
+    state.running = true;
+    state.paused  = false;
+
+    const lvl = LEVELS[index];
+    state.timeLeft = lvl.timeLimit;
+
+    // CRITICAL BUG FIX: Deep copy map so LEVELS data is never mutated
+    mapData   = lvl.map.map(row => row.map(cell => cell));
+    mapHeight = mapData.length;
+    mapWidth  = mapData[0].length;
+
+    enemies = [];
+    pickups = [];
+    cameraX = 0;
+    cloudPositions = null; // reset clouds per level
+
+    for (let row = 0; row < mapHeight; row++) {
+      for (let col = 0; col < mapWidth; col++) {
+        const cell = mapData[row][col];
+        if (cell === 'M') {
+          player.x = col * TILE_SIZE;
+          player.y = row * TILE_SIZE;
+          player.vx = 0; player.vy = 0;
+          player.onGround = false;
+          player.alive = true;
+          player.frame = 0;
+          player.frameTimer = 0;
+          mapData[row][col] = T.EMPTY;
+        } else if (cell === 'G') {
+          enemies.push({ type: 'goomba', x: col * TILE_SIZE, y: row * TILE_SIZE, vx: -2, vy: 0, alive: true, width: TILE_SIZE * 0.9, height: TILE_SIZE * 0.85 });
+          mapData[row][col] = T.EMPTY;
+        } else if (cell === 'K') {
+          enemies.push({ type: 'koopa', x: col * TILE_SIZE, y: row * TILE_SIZE, vx: -1.5, vy: 0, alive: true, width: TILE_SIZE * 0.85, height: TILE_SIZE * 0.95 });
+          mapData[row][col] = T.EMPTY;
+        } else if (cell === T.COIN || cell === T.STAR) {
+          pickups.push({ type: cell === T.COIN ? 'coin' : 'star', x: col * TILE_SIZE, y: row * TILE_SIZE, collected: false });
+          mapData[row][col] = T.EMPTY;
+        }
+      }
+    }
+
+    updateHUD();
+    showScreen('game');
+
+    // Resize after screen becomes visible
+    requestAnimationFrame(() => {
+      resizeCanvas();
+      startTimer();
+      state.animId = requestAnimationFrame(gameLoop);
+    });
+  }
+
+  // ══════════════════════════════════════════
+  //  CANVAS RESIZE  – BUG FIX: measure after display
+  // ══════════════════════════════════════════
+  function resizeCanvas() {
+    const hud   = document.getElementById('hud');
+    const touch = document.getElementById('touch-controls');
+    const screenH = window.innerHeight;
+    const screenW = window.innerWidth;
+
+    // Only measure visible elements
+    const hudH   = hud.offsetHeight || 0;
+    // Touch controls height: if visible (coarse pointer or small screen)
+    const isTouchVisible = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
+    const touchH = isTouchVisible ? (touch.offsetHeight || 0) : 0;
+
+    canvas.width  = screenW;
+    canvas.height = Math.max(100, screenH - hudH - touchH);
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  // Also handle orientation change
+  window.addEventListener('orientationchange', () => {
+    setTimeout(resizeCanvas, 100);
+  });
+
+  // ══════════════════════════════════════════
+  //  TIMER
+  // ══════════════════════════════════════════
+  function startTimer() {
+    clearInterval(state.timerInterval);
+    state.timerInterval = setInterval(() => {
+      if (!state.running || state.paused) return;
+      state.timeLeft--;
+      document.getElementById('hud-time').textContent = state.timeLeft;
+      if (state.timeLeft <= 0) {
+        state.timeLeft = 0;
+        killPlayer();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
+  }
+
+  // ══════════════════════════════════════════
+  //  INPUT
+  // ══════════════════════════════════════════
+  document.addEventListener('keydown', e => {
+    if (e.code === 'ArrowLeft'  || e.code === 'KeyA') { keys.left  = true; e.preventDefault(); }
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') { keys.right = true; e.preventDefault(); }
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') { keys.jump = true; e.preventDefault(); }
+  });
+  document.addEventListener('keyup', e => {
+    if (e.code === 'ArrowLeft'  || e.code === 'KeyA') keys.left  = false;
+    if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+    if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') keys.jump = false;
+  });
+
+  // Touch buttons – support multi-touch properly
+  function addTouch(id, key) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+
+    function press(e)   { keys[key] = true;  btn.classList.add('pressed');    e.preventDefault(); }
+    function release(e) { keys[key] = false; btn.classList.remove('pressed'); e.preventDefault(); }
+
+    btn.addEventListener('touchstart',  press,   { passive: false });
+    btn.addEventListener('touchend',    release, { passive: false });
+    btn.addEventListener('touchcancel', release, { passive: false });
+    btn.addEventListener('mousedown',   press);
+    btn.addEventListener('mouseup',     release);
+    btn.addEventListener('mouseleave',  release);
+  }
+  addTouch('tc-left',  'left');
+  addTouch('tc-right', 'right');
+  addTouch('tc-jump',  'jump');
+
+  // ══════════════════════════════════════════
+  //  PHYSICS
+  // ══════════════════════════════════════════
+  function tileAt(col, row) {
+    if (row < 0 || row >= mapHeight) return T.GROUND;
+    if (col < 0 || col >= mapWidth)  return T.EMPTY;
+    const c = mapData[row][col];
+    return (typeof c === 'number') ? c : T.EMPTY;
+  }
+
+  function isSolid(t) {
+    return t === T.GROUND || t === T.BRICK || t === T.QUESTION ||
+           t === T.PIPE_TL || t === T.PIPE_TR || t === T.PIPE_BL || t === T.PIPE_BR;
+  }
+
+  function resolveEntity(ent) {
+    // Horizontal
+    ent.x += ent.vx;
+    const left  = Math.floor(ent.x / TILE_SIZE);
+    const right = Math.floor((ent.x + ent.width - 1) / TILE_SIZE);
+    const top   = Math.floor(ent.y / TILE_SIZE);
+    const bot   = Math.floor((ent.y + ent.height - 1) / TILE_SIZE);
+
+    for (let r = top; r <= bot; r++) {
+      if (ent.vx > 0 && isSolid(tileAt(right, r))) {
+        ent.x  = right * TILE_SIZE - ent.width;
+        ent.vx = -Math.abs(ent.vx);
+      }
+      if (ent.vx < 0 && isSolid(tileAt(left, r))) {
+        ent.x  = (left + 1) * TILE_SIZE;
+        ent.vx = Math.abs(ent.vx);
+      }
+    }
+
+    // Vertical
+    ent.vy = Math.min(ent.vy + GRAVITY, TERM_VEL);
+    ent.y += ent.vy;
+    const l2 = Math.floor(ent.x / TILE_SIZE);
+    const r2 = Math.floor((ent.x + ent.width - 1) / TILE_SIZE);
+    const b2 = Math.floor((ent.y + ent.height - 1) / TILE_SIZE);
+    const t2 = Math.floor(ent.y / TILE_SIZE);
+
+    ent.onGround = false;
+    for (let c = l2; c <= r2; c++) {
+      if (ent.vy > 0 && isSolid(tileAt(c, b2))) {
+        ent.y = b2 * TILE_SIZE - ent.height;
+        ent.vy = 0;
+        ent.onGround = true;
+      }
+      if (ent.vy < 0 && isSolid(tileAt(c, t2))) {
+        ent.y = (t2 + 1) * TILE_SIZE;
+        ent.vy = 0;
+      }
+    }
+
+    if (ent.y > mapHeight * TILE_SIZE + 200) ent.alive = false;
+  }
+
+  // ══════════════════════════════════════════
+  //  PLAYER UPDATE
+  // ══════════════════════════════════════════
+  let jumpHeld = false;
+
+  function updatePlayer() {
+    if (!player.alive) return;
+
+    if (keys.left)       player.vx = Math.max(player.vx - 1.2, -player.speed);
+    else if (keys.right) player.vx = Math.min(player.vx + 1.2,  player.speed);
+    else {
+      player.vx *= 0.78;
+      if (Math.abs(player.vx) < 0.2) player.vx = 0;
+    }
+
+    if (keys.jump && !jumpHeld && player.onGround) {
+      player.vy = player.jumpPower;
+      jumpHeld = true;
+    }
+    if (!keys.jump) jumpHeld = false;
+
+    resolveEntity(player);
+
+    if (player.x < 0) { player.x = 0; player.vx = 0; }
+    if (player.y > mapHeight * TILE_SIZE + 100) killPlayer();
+
+    player.frameTimer++;
+    if (player.frameTimer > 8) { player.frame = (player.frame + 1) % 3; player.frameTimer = 0; }
+  }
+
+  // ══════════════════════════════════════════
+  //  PICKUPS
+  // ══════════════════════════════════════════
+  function checkPickups() {
+    pickups.forEach(p => {
+      if (p.collected) return;
+      if (
+        player.x < p.x + TILE_SIZE && player.x + player.width > p.x &&
+        player.y < p.y + TILE_SIZE && player.y + player.height > p.y
+      ) {
+        p.collected = true;
+        if (p.type === 'coin')  { state.coins++; state.score += 200; }
+        else if (p.type === 'star') { state.score += 1000; }
+        updateHUD();
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════
+  //  ENEMIES
+  // ══════════════════════════════════════════
+  function updateEnemies() {
+    enemies.forEach(e => {
+      if (!e.alive) return;
+      resolveEntity(e);
+
+      if (
+        player.alive &&
+        player.x < e.x + e.width - 4 && player.x + player.width > e.x + 4 &&
+        player.y < e.y + e.height - 4 && player.y + player.height > e.y + 4
+      ) {
+        if (player.vy > 0 && player.y + player.height < e.y + e.height * 0.5 + 10) {
+          e.alive = false;
+          player.vy = -8;
+          state.score += 100;
+          updateHUD();
+        } else {
+          killPlayer();
+        }
+      }
+    });
+  }
+
+  // ══════════════════════════════════════════
+  //  FLAG CHECK
+  // ══════════════════════════════════════════
+  function checkFlag() {
+    if (!player.alive) return;
+    const col = Math.floor((player.x + player.width / 2) / TILE_SIZE);
+    const row = Math.floor((player.y + player.height / 2) / TILE_SIZE);
+    if (tileAt(col, row) === T.FLAG) winLevel();
+    if (player.x + player.width >= mapWidth * TILE_SIZE - TILE_SIZE) winLevel();
+  }
+
+  // ══════════════════════════════════════════
+  //  WIN / LOSE
+  // ══════════════════════════════════════════
+  function winLevel() {
+    if (!state.running) return;
+    state.running = false;
+    stopTimer();
+
+    const timeBonus = state.timeLeft * 50;
+    state.score     += timeBonus;
+    state.totalScore += state.score;
+    state.totalCoins += state.coins;
+
+    if (!state.completed.includes(state.currentLevel))
+      state.completed.push(state.currentLevel);
+
+    document.getElementById('win-score').textContent = state.score;
+    document.getElementById('win-coins').textContent = state.coins;
+    document.getElementById('win-time').textContent  = state.timeLeft;
+    document.getElementById('win-bonus').textContent = timeBonus;
+
+    setTimeout(() => {
+      if (state.currentLevel >= LEVELS.length - 1) showCompleteScreen();
+      else showScreen('win');
+    }, 600);
+  }
+
+  function killPlayer() {
+    if (!player.alive) return;
+    player.alive = false;
+    player.vy    = -10;
+    state.running = false;
+    stopTimer();
+
+    // BUG FIX: keep rendering death animation before switching screen
+    function deathLoop() {
+      player.vy += GRAVITY;
+      player.y  += player.vy;
+      updateCamera();
+      render();
+      if (player.y < mapHeight * TILE_SIZE + 100)
+        requestAnimationFrame(deathLoop);
+    }
+    requestAnimationFrame(deathLoop);
+
+    setTimeout(() => {
+      state.lives--;
+      if (state.lives <= 0) showScreen('gameover');
+      else startLevel(state.currentLevel);
+    }, 1200);
+  }
+
+  function showCompleteScreen() {
+    document.getElementById('total-score').textContent = state.totalScore;
+    document.getElementById('total-coins').textContent = state.totalCoins;
+    showScreen('complete');
+  }
+
+  // ══════════════════════════════════════════
+  //  CAMERA
+  // ══════════════════════════════════════════
+  function updateCamera() {
+    const targetX = player.x - canvas.width / 3;
+    cameraX += (targetX - cameraX) * 0.15;
+    cameraX = Math.max(0, Math.min(cameraX, mapWidth * TILE_SIZE - canvas.width));
+  }
+
+  // ══════════════════════════════════════════
+  //  HUD
+  // ══════════════════════════════════════════
+  function updateHUD() {
+    const lvl = LEVELS[state.currentLevel];
+    document.getElementById('hud-score').textContent = String(state.score).padStart(6, '0');
+    document.getElementById('hud-coins').textContent = '×' + String(state.coins).padStart(2, '0');
+    document.getElementById('hud-level').textContent = lvl.name.replace('World ', '').split(' ')[0];
+    document.getElementById('hud-time').textContent  = state.timeLeft;
+    document.getElementById('hud-lives').textContent = '♥ ' + state.lives;
+  }
+
+  // ══════════════════════════════════════════
+  //  GAME LOOP  – BUG FIX: only loop when running
+  // ══════════════════════════════════════════
+  function gameLoop() {
+    if (!state.running) return;  // Stop loop completely; death anim is separate
+
+    updatePlayer();
+    updateEnemies();
+    checkPickups();
+    checkFlag();
+    updateCamera();
+    render();
+
+    state.animId = requestAnimationFrame(gameLoop);
+  }
+
+  // ══════════════════════════════════════════
+  //  RENDER
+  // ══════════════════════════════════════════
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = COL.sky;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    drawClouds();
+
+    ctx.save();
+    ctx.translate(-cameraX, 0);
+
+    const startCol = Math.max(0, Math.floor(cameraX / TILE_SIZE) - 1);
+    const endCol   = Math.min(mapWidth, startCol + Math.ceil(canvas.width / TILE_SIZE) + 2);
+
+    for (let row = 0; row < mapHeight; row++) {
+      for (let col = startCol; col < endCol; col++) {
+        const tile = mapData[row][col];
+        if (typeof tile !== 'number' || tile === T.EMPTY) continue;
+        drawTile(tile, col * TILE_SIZE, row * TILE_SIZE);
+      }
+    }
+
+    pickups.forEach(p => {
+      if (p.collected) return;
+      if (p.type === 'coin') drawCoin(p.x, p.y);
+      else drawStar(p.x, p.y);
+    });
+
+    enemies.forEach(e => {
+      if (!e.alive) return;
+      if (e.type === 'goomba') drawGoomba(e.x, e.y);
+      else drawKoopa(e.x, e.y);
+    });
+
+    drawPlayer();
+    ctx.restore();
+  }
+
+  // ── Clouds ──
+  let cloudPositions = null;
+  function drawClouds() {
+    if (!cloudPositions) {
+      cloudPositions = [];
+      for (let i = 0; i < 8; i++) {
+        cloudPositions.push({
+          x: i * 480 + Math.random() * 200,
+          y: 30 + Math.random() * 80,
+          w: 80 + Math.random() * 60,
+        });
+      }
+    }
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    cloudPositions.forEach(c => {
+      const cx = (c.x - cameraX * 0.4) % (mapWidth * TILE_SIZE + 200);
+      drawCloud(cx, c.y, c.w);
+    });
+  }
+  function drawCloud(x, y, w) {
+    ctx.beginPath();
+    ctx.ellipse(x + w * 0.5, y + 16, w * 0.5, 16, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + w * 0.3, y + 20, w * 0.28, 20, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + w * 0.7, y + 20, w * 0.26, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // ── Tile renderer ──
+  function drawTile(t, x, y) {
+    const s = TILE_SIZE;
+    ctx.lineWidth = 2;
+
+    if (t === T.GROUND) {
+      ctx.fillStyle = COL.ground;
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = COL.groundDark;
+      ctx.fillRect(x, y, s, 4);
+      ctx.fillRect(x, y, 4, s);
+      ctx.strokeStyle = COL.outline;
+      ctx.strokeRect(x + 1, y + 1, s - 2, s - 2);
+    } else if (t === T.BRICK) {
+      ctx.fillStyle = COL.brick;
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = COL.brickDark;
+      ctx.fillRect(x, y, s, 3);
+      ctx.fillRect(x, y + s / 2 - 1, s, 3);
+      ctx.fillRect(x, y, 3, s / 2);
+      ctx.fillRect(x + s / 2, y + s / 2, 3, s / 2);
+      ctx.strokeStyle = COL.outline;
+      ctx.strokeRect(x + 1, y + 1, s - 2, s - 2);
+    } else if (t === T.QUESTION) {
+      const pulse = Math.sin(Date.now() / 300) * 0.1 + 0.9;
+      ctx.fillStyle = COL.question;
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = COL.questionDk;
+      ctx.fillRect(x, y, s, 4);
+      ctx.fillRect(x, y, 4, s);
+      ctx.strokeStyle = COL.outline;
+      ctx.strokeRect(x + 1, y + 1, s - 2, s - 2);
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.floor(s * 0.55 * pulse)}px monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', x + s / 2, y + s / 2 + 1);
+    } else if (t === T.PIPE_TL) {
+      ctx.fillStyle = COL.pipeGreen;
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = COL.pipeDark;
+      ctx.fillRect(x + s - 6, y, 6, s);
+      ctx.fillRect(x, y + s - 6, s, 6);
+      ctx.strokeStyle = COL.outline;
+      ctx.strokeRect(x + 1, y + 1, s - 2, s - 2);
+      // Cap
+      ctx.fillStyle = COL.pipeGreen;
+      ctx.fillRect(x - 4, y, s + 8, 10);
+      ctx.strokeStyle = COL.outline;
+      ctx.strokeRect(x - 4, y, s + 8, 10);
+    } else if (t === T.PIPE_TR) {
+      ctx.fillStyle = COL.pipeGreen;
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = COL.pipeDark;
+      ctx.fillRect(x, y, 6, s);
+      ctx.strokeStyle = COL.outline;
+      ctx.strokeRect(x + 1, y + 1, s - 2, s - 2);
+    } else if (t === T.PIPE_BL || t === T.PIPE_BR) {
+      ctx.fillStyle = COL.pipeGreen;
+      ctx.fillRect(x, y, s, s);
+      ctx.fillStyle = COL.pipeDark;
+      const side = t === T.PIPE_BL ? s - 6 : 0;
+      ctx.fillRect(x + side, y, 6, s);
+      ctx.strokeStyle = COL.outline;
+      ctx.strokeRect(x + 1, y + 1, s - 2, s - 2);
+    } else if (t === T.FLAG) {
+      ctx.fillStyle = COL.flagPole;
+      ctx.fillRect(x + s / 2 - 3, y, 6, s);
+      ctx.fillStyle = '#e52521';
+      ctx.fillRect(x + s / 2 + 3, y + 4, 20, 14);
+      ctx.strokeStyle = COL.outline;
+      ctx.strokeRect(x + s / 2 + 3, y + 4, 20, 14);
+    }
+  }
+
+  // ── Coin ──
+  function drawCoin(x, y) {
+    const t  = Date.now() / 600;
+    const s  = TILE_SIZE;
+    const cx = x + s / 2, cy = y + s / 2;
+    const r  = s * 0.28;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(Math.abs(Math.cos(t)), 1);
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = COL.coin;
+    ctx.fill();
+    ctx.strokeStyle = COL.outline;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Star ──
+  function drawStar(x, y) {
+    const t  = Date.now() / 400;
+    const s  = TILE_SIZE;
+    const cx = x + s / 2, cy = y + s / 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(t);
+    ctx.fillStyle = COL.starGlow;
+    drawStarShape(0, 0, s * 0.32, s * 0.15, 5);
+    ctx.fillStyle = COL.star;
+    drawStarShape(0, 0, s * 0.25, s * 0.11, 5);
+    ctx.restore();
+  }
+  function drawStarShape(cx, cy, r1, r2, points) {
+    ctx.beginPath();
+    for (let i = 0; i < points * 2; i++) {
+      const angle = (i * Math.PI) / points - Math.PI / 2;
+      const r  = i % 2 === 0 ? r1 : r2;
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // ── Mario ──
+  function drawPlayer() {
+    if (!player.alive && player.y > mapHeight * TILE_SIZE + 50) return;
+    ctx.save();
+    ctx.translate(
+      player.x + player.width / 2,
+      player.y + player.height / 2
+    );
+    if (player.vx < 0) ctx.scale(-1, 1);
+
+    // Body
+    ctx.fillStyle = COL.mario;
+    ctx.fillRect(-14, -18, 28, 20);
+    // Hat
+    ctx.fillStyle = COL.mario;
+    ctx.fillRect(-10, -28, 24, 10);
+    ctx.fillRect(-6, -32, 20, 6);
+    // Face
+    ctx.fillStyle = '#f9c498';
+    ctx.fillRect(-10, -18, 16, 12);
+    // Eye
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, -16, 4, 4);
+    // Moustache
+    ctx.fillStyle = '#8b3500';
+    ctx.fillRect(-10, -10, 20, 3);
+    // Pants
+    ctx.fillStyle = COL.marioPants;
+    ctx.fillRect(-14, 2, 28, 14);
+    // Shoes
+    ctx.fillStyle = COL.marioBrown;
+    ctx.fillRect(-16, 14, 14, 6);
+    ctx.fillRect(4,   14, 14, 6);
+
+    ctx.restore();
+  }
+
+  // ── Goomba ──
+  function drawGoomba(x, y) {
+    const s  = TILE_SIZE;
+    const cx = x + s / 2, cy = y + s * 0.85;
+    ctx.fillStyle = COL.goomba;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 12, 18, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = COL.outline; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#5a3800';
+    ctx.fillRect(cx - 18, cy - 4, 14, 8);
+    ctx.fillRect(cx + 4,  cy - 4, 14, 8);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(cx - 12, cy - 20, 8, 7);
+    ctx.fillRect(cx + 4,  cy - 20, 8, 7);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx - 10, cy - 19, 5, 5);
+    ctx.fillRect(cx + 5,  cy - 19, 5, 5);
+    ctx.fillRect(cx - 13, cy - 24, 9, 3);
+    ctx.fillRect(cx + 4,  cy - 24, 9, 3);
+  }
+
+  // ── Koopa ──
+  function drawKoopa(x, y) {
+    const s  = TILE_SIZE;
+    const cx = x + s / 2, cy = y + s * 0.9;
+    ctx.fillStyle = COL.koopa;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 14, 16, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = COL.outline; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = COL.koopaDark;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy - 14, 10, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f9c498';
+    ctx.beginPath();
+    ctx.ellipse(cx + 8, cy - 30, 10, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = COL.outline; ctx.stroke();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(cx + 12, cy - 34, 4, 4);
+    ctx.fillStyle = '#f9c498';
+    ctx.fillRect(cx - 18, cy - 6, 12, 8);
+    ctx.fillRect(cx + 6,  cy - 6, 12, 8);
+  }
+
+  // ══════════════════════════════════════════
+  //  BUTTON EVENTS
+  // ══════════════════════════════════════════
+  document.getElementById('btn-start').addEventListener('click', () => {
+    buildLevelGrid();
+    showScreen('select');
+  });
+  document.getElementById('btn-back-select').addEventListener('click', () => {
+    showScreen('start');
+  });
+  document.getElementById('btn-next-level').addEventListener('click', () => {
+    const next = state.currentLevel + 1;
+    if (next < LEVELS.length) startLevel(next);
+    else showCompleteScreen();
+  });
+  document.getElementById('btn-win-select').addEventListener('click', () => {
+    buildLevelGrid();
+    showScreen('select');
+  });
+  document.getElementById('btn-retry').addEventListener('click', () => {
+    state.lives = 3;
+    state.score = 0;
+    state.coins = 0;
+    startLevel(state.currentLevel);
+  });
+  document.getElementById('btn-go-select').addEventListener('click', () => {
+    state.lives = 3;
+    buildLevelGrid();
+    showScreen('select');
+  });
+  document.getElementById('btn-restart-all').addEventListener('click', () => {
+    state.lives = 3; state.totalScore = 0;
+    state.totalCoins = 0; state.completed = [];
+    state.currentLevel = 0;
+    buildLevelGrid();
+    showScreen('select');
+  });
+
+  // Prevent context menu on long-press (mobile)
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // ── Init ──
+  showScreen('start');
+  resizeCanvas();
+
+})();
+</script>
+</body>
+</html>
